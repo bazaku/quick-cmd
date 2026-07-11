@@ -13,17 +13,14 @@ final class HotkeyManager {
         return chars.reduce(OSType(0)) { ($0 << 8) + OSType($1) }
     }()
 
-    func register(_ hotkey: ParsedHotkey, handler: @escaping () -> Void) {
-        unregister()
-        self.handler = handler
-
+    init() {
         var eventType = EventTypeSpec(
             eventClass: OSType(kEventClassKeyboard),
             eventKind: UInt32(kEventHotKeyPressed))
 
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
 
-        InstallEventHandler(
+        let status = InstallEventHandler(
             GetApplicationEventTarget(),
             { _, event, userData -> OSStatus in
                 guard let userData else { return noErr }
@@ -37,24 +34,36 @@ final class HotkeyManager {
             },
             1, &eventType, selfPtr, &eventHandlerRef)
 
+        if status != noErr {
+            NSLog("HotkeyManager: InstallEventHandler failed with status %d", status)
+        }
+    }
+
+    func register(_ hotkey: ParsedHotkey, handler: @escaping () -> Void) {
+        if let hotKeyRef {
+            UnregisterEventHotKey(hotKeyRef)
+            self.hotKeyRef = nil
+        }
+        self.handler = handler
+
         let hotKeyID = EventHotKeyID(signature: signature, id: 1)
-        RegisterEventHotKey(
+        let status = RegisterEventHotKey(
             hotkey.keyCode,
             hotkey.modifierFlags,
             hotKeyID,
             GetApplicationEventTarget(),
             0,
             &hotKeyRef)
+
+        if status != noErr {
+            NSLog("HotkeyManager: RegisterEventHotKey failed with status %d", status)
+        }
     }
 
     func unregister() {
         if let hotKeyRef {
             UnregisterEventHotKey(hotKeyRef)
             self.hotKeyRef = nil
-        }
-        if let eventHandlerRef {
-            RemoveEventHandler(eventHandlerRef)
-            self.eventHandlerRef = nil
         }
         handler = nil
     }

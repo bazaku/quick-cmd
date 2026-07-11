@@ -40,7 +40,11 @@ final class PaletteController: NSObject, NSWindowDelegate {
         panel.center()
 
         self.panel = panel
-        NSApp.activate(ignoringOtherApps: true)
+        if #available(macOS 14, *) {
+            NSApp.activate()
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+        }
         panel.makeKeyAndOrderFront(nil)
     }
 

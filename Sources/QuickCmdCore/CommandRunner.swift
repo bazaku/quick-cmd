@@ -29,8 +29,21 @@ public enum CommandRunner {
             return RunResult(exitCode: -1, stdout: "", stderr: error.localizedDescription)
         }
 
-        let outData = outPipe.fileHandleForReading.readDataToEndOfFile()
-        let errData = errPipe.fileHandleForReading.readDataToEndOfFile()
+        var outData = Data()
+        var errData = Data()
+        let group = DispatchGroup()
+
+        group.enter()
+        DispatchQueue.global().async {
+            outData = outPipe.fileHandleForReading.readDataToEndOfFile()
+            group.leave()
+        }
+        group.enter()
+        DispatchQueue.global().async {
+            errData = errPipe.fileHandleForReading.readDataToEndOfFile()
+            group.leave()
+        }
+        group.wait()
         process.waitUntilExit()
 
         return RunResult(
