@@ -4,11 +4,10 @@ import XCTest
 final class AppScannerTests: XCTestCase {
     private var tmp: URL!
 
-    override func setUp() {
-        super.setUp()
+    override func setUpWithError() throws {
         tmp = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("AppScannerTests-\(ProcessInfo.processInfo.globallyUniqueString)")
-        try! FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
     }
 
     override func tearDown() {

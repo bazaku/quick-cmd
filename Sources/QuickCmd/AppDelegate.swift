@@ -12,7 +12,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
 
         store = CommandStore(configURL: CommandStore.defaultConfigURL)
-        apps = AppScanner.scan()
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let scanned = AppScanner.scan()
+            DispatchQueue.main.async { self?.apps = scanned }
+        }
 
         palette = PaletteController(
             commandsProvider: { [weak self] in self?.store.commands ?? [] },
@@ -38,7 +41,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func reloadConfig() {
         statusBar.setErrorState(false)
         store.reload()
-        apps = AppScanner.scan()
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let scanned = AppScanner.scan()
+            DispatchQueue.main.async { self?.apps = scanned }
+        }
         hotkeyManager.register(store.hotkey) { [weak self] in
             self?.palette.toggle()
         }

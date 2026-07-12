@@ -27,6 +27,7 @@ final class PaletteController: NSObject, NSWindowDelegate {
     }
 
     func show() {
+        guard panel == nil else { return }
         let root = PaletteView(
             commands: commandsProvider(),
             apps: appsProvider(),

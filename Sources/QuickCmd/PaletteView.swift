@@ -31,12 +31,13 @@ struct PaletteView: View {
     private var filteredApps: [AppItem] {
         guard !query.trimmingCharacters(in: .whitespaces).isEmpty else { return [] }
         return apps
-            .compactMap { item -> (Int, AppItem)? in
+            .enumerated()
+            .compactMap { (i, item) -> (Int, Int, AppItem)? in
                 guard let s = FuzzyMatcher.score(item.name, query: query) else { return nil }
-                return (s, item)
+                return (s, i, item)
             }
-            .sorted { $0.0 > $1.0 }
-            .map(\.1)
+            .sorted { l, r in l.0 != r.0 ? l.0 > r.0 : l.1 < r.1 }
+            .map(\.2)
     }
 
     private var rows: [PaletteRow] {
