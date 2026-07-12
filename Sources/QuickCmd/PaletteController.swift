@@ -5,11 +5,20 @@ import QuickCmdCore
 final class PaletteController: NSObject, NSWindowDelegate {
     private var panel: NSPanel?
     private let commandsProvider: () -> [Command]
+    private let appsProvider: () -> [AppItem]
     private let onRun: (Command) -> Void
+    private let onOpen: (AppItem) -> Void
 
-    init(commandsProvider: @escaping () -> [Command], onRun: @escaping (Command) -> Void) {
+    init(
+        commandsProvider: @escaping () -> [Command],
+        appsProvider: @escaping () -> [AppItem],
+        onRun: @escaping (Command) -> Void,
+        onOpen: @escaping (AppItem) -> Void
+    ) {
         self.commandsProvider = commandsProvider
+        self.appsProvider = appsProvider
         self.onRun = onRun
+        self.onOpen = onOpen
         super.init()
     }
 
@@ -20,15 +29,19 @@ final class PaletteController: NSObject, NSWindowDelegate {
     func show() {
         let root = PaletteView(
             commands: commandsProvider(),
+            apps: appsProvider(),
             onRun: { [weak self] command in
                 self?.hide()
                 self?.onRun(command)
             },
+            onOpen: { [weak self] item in
+                self?.hide()
+                self?.onOpen(item)
+            },
             onEscape: { [weak self] in self?.hide() })
 
         let hosting = NSHostingController(rootView: root)
-        let panel = NSPanel(
-            contentViewController: hosting)
+        let panel = NSPanel(contentViewController: hosting)
         panel.styleMask = [.nonactivatingPanel, .titled, .fullSizeContentView]
         panel.titleVisibility = .hidden
         panel.titlebarAppearsTransparent = true
@@ -53,7 +66,6 @@ final class PaletteController: NSObject, NSWindowDelegate {
         panel = nil
     }
 
-    // Dismiss when the palette loses key status (focus loss).
     func windowDidResignKey(_ notification: Notification) {
         hide()
     }

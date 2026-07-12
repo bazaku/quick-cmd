@@ -2,16 +2,53 @@ import SwiftUI
 import AppKit
 import QuickCmdCore
 
+// Flat list item spanning both sections for unified keyboard navigation.
+private enum PaletteRow: Identifiable {
+    case command(Command)
+    case app(AppItem)
+
+    var id: String {
+        switch self {
+        case .command(let c): return "cmd:\(c.id)"
+        case .app(let a):     return "app:\(a.url.path)"
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .command(let c): return c.name
+        case .app(let a):     return a.name
+        }
+    }
+}
+
 struct PaletteView: View {
     let commands: [Command]
+    let apps: [AppItem]
     let onRun: (Command) -> Void
+    let onOpen: (AppItem) -> Void
     let onEscape: () -> Void
 
     @State private var query = ""
     @State private var selection = 0
 
-    private var results: [Command] {
+    private var filteredCommands: [Command] {
         FuzzyMatcher.filter(commands, query: query)
+    }
+
+    private var filteredApps: [AppItem] {
+        guard !query.trimmingCharacters(in: .whitespaces).isEmpty else { return [] }
+        return apps
+            .compactMap { item -> (Int, AppItem)? in
+                guard let s = FuzzyMatcher.score(item.name, query: query) else { return nil }
+                return (s, item)
+            }
+            .sorted { $0.0 > $1.0 }
+            .map(\.1)
+    }
+
+    private var rows: [PaletteRow] {
+        filteredCommands.map { .command($0) } + filteredApps.map { .app($0) }
     }
 
     var body: some View {
@@ -30,10 +67,33 @@ struct PaletteView: View {
 
             Divider()
 
-            List(Array(results.enumerated()), id: \.element.id) { index, command in
-                Text(command.name)
-                    .padding(.vertical, 4)
-                    .listRowBackground(index == selection ? Color.accentColor.opacity(0.25) : Color.clear)
+            List {
+                if !filteredCommands.isEmpty {
+                    Section(header: Text("Commands").foregroundColor(.secondary).font(.caption)) {
+                        ForEach(Array(filteredCommands.enumerated()), id: \.element.id) { index, command in
+                            Text(command.name)
+                                .padding(.vertical, 4)
+                                .listRowBackground(rowIndex(for: .command(command)) == selection
+                                    ? Color.accentColor.opacity(0.25) : Color.clear)
+                        }
+                    }
+                }
+
+                if !filteredApps.isEmpty {
+                    Section(header: Text("Applications").foregroundColor(.secondary).font(.caption)) {
+                        ForEach(Array(filteredApps.enumerated()), id: \.element.id) { index, app in
+                            HStack(spacing: 8) {
+                                Image(nsImage: NSWorkspace.shared.icon(forFile: app.url.path))
+                                    .resizable()
+                                    .frame(width: 32, height: 32)
+                                Text(app.name)
+                            }
+                            .padding(.vertical, 2)
+                            .listRowBackground(rowIndex(for: .app(app)) == selection
+                                ? Color.accentColor.opacity(0.25) : Color.clear)
+                        }
+                    }
+                }
             }
             .listStyle(.plain)
             .frame(height: 260)
@@ -42,14 +102,21 @@ struct PaletteView: View {
         .background(.ultraThinMaterial)
     }
 
+    private func rowIndex(for row: PaletteRow) -> Int {
+        rows.firstIndex(where: { $0.id == row.id }) ?? -1
+    }
+
     private func moveSelection(_ delta: Int) {
-        guard !results.isEmpty else { return }
-        selection = min(max(0, selection + delta), results.count - 1)
+        guard !rows.isEmpty else { return }
+        selection = min(max(0, selection + delta), rows.count - 1)
     }
 
     private func runSelected() {
-        guard results.indices.contains(selection) else { return }
-        onRun(results[selection])
+        guard rows.indices.contains(selection) else { return }
+        switch rows[selection] {
+        case .command(let c): onRun(c)
+        case .app(let a):     onOpen(a)
+        }
     }
 }
 
@@ -68,7 +135,7 @@ private struct CommandTextField: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSTextField {
         let field = NSTextField()
-        field.placeholderString = "Search commands…"
+        field.placeholderString = "Search commands and apps…"
         field.isBordered = false
         field.drawsBackground = false
         field.focusRingType = .none
@@ -93,7 +160,6 @@ private struct CommandTextField: NSViewRepresentable {
             parent.text = field.stringValue
         }
 
-        // Field editor routes special keys here before acting on them.
         func control(_ control: NSControl, textView: NSTextView,
                      doCommandBy selector: Selector) -> Bool {
             switch selector {
