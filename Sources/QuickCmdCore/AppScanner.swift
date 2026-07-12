@@ -28,17 +28,8 @@ public enum AppScanner {
         for case let url as URL in enumerator {
             guard url.pathExtension == "app" else { continue }
             enumerator.skipDescendants()
-            results.append(AppItem(name: appName(at: url), url: url))
+            results.append(AppItem(name: url.deletingPathExtension().lastPathComponent, url: url))
         }
         return results
-    }
-
-    private static func appName(at url: URL) -> String {
-        let plistURL = url.appendingPathComponent("Contents/Info.plist")
-        if let plist = NSDictionary(contentsOf: plistURL) {
-            if let d = plist["CFBundleDisplayName"] as? String, !d.isEmpty { return d }
-            if let b = plist["CFBundleName"] as? String, !b.isEmpty { return b }
-        }
-        return url.deletingPathExtension().lastPathComponent
     }
 }
