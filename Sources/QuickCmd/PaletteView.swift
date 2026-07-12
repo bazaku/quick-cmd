@@ -60,34 +60,42 @@ struct PaletteView: View {
 
             Divider()
 
-            List {
-                Section(header: Text("Commands").foregroundColor(.secondary).font(.caption)) {
-                    ForEach(Array(filteredCommands.enumerated()), id: \.element.id) { index, command in
-                        Text(command.name)
-                            .padding(.vertical, 4)
-                            .listRowBackground(index == selection
-                                ? Color.accentColor.opacity(0.25) : Color.clear)
+            ScrollViewReader { proxy in
+                List {
+                    Section(header: Text("Commands").foregroundColor(.secondary).font(.caption)) {
+                        ForEach(Array(filteredCommands.enumerated()), id: \.element.id) { index, command in
+                            Text(command.name)
+                                .padding(.vertical, 4)
+                                .listRowBackground(index == selection
+                                    ? Color.accentColor.opacity(0.25) : Color.clear)
+                                .id("cmd:\(command.id)")
+                        }
                     }
-                }
 
-                if !filteredApps.isEmpty {
-                    Section(header: Text("Applications").foregroundColor(.secondary).font(.caption)) {
-                        ForEach(Array(filteredApps.enumerated()), id: \.element.id) { index, app in
-                            HStack(spacing: 8) {
-                                Image(nsImage: NSWorkspace.shared.icon(forFile: app.url.path))
-                                    .resizable()
-                                    .frame(width: 32, height: 32)
-                                Text(app.name)
+                    if !filteredApps.isEmpty {
+                        Section(header: Text("Applications").foregroundColor(.secondary).font(.caption)) {
+                            ForEach(Array(filteredApps.enumerated()), id: \.element.id) { index, app in
+                                HStack(spacing: 8) {
+                                    Image(nsImage: NSWorkspace.shared.icon(forFile: app.url.path))
+                                        .resizable()
+                                        .frame(width: 32, height: 32)
+                                    Text(app.name)
+                                }
+                                .padding(.vertical, 2)
+                                .listRowBackground((filteredCommands.count + index) == selection
+                                    ? Color.accentColor.opacity(0.25) : Color.clear)
+                                .id("app:\(app.url.path)")
                             }
-                            .padding(.vertical, 2)
-                            .listRowBackground((filteredCommands.count + index) == selection
-                                ? Color.accentColor.opacity(0.25) : Color.clear)
                         }
                     }
                 }
+                .listStyle(.plain)
+                .frame(height: 260)
+                .onChange(of: selection) { _ in
+                    guard rows.indices.contains(selection) else { return }
+                    proxy.scrollTo(rows[selection].id, anchor: nil)
+                }
             }
-            .listStyle(.plain)
-            .frame(height: 260)
         }
         .frame(width: 560)
         .background(.ultraThinMaterial)
