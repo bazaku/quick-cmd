@@ -7,13 +7,14 @@ public enum DefaultConfig {
       "commands": [
         {
           "name": "Quit All Apps",
-          "shell": "osascript -e 'tell application \"System Events\" to set l to name of (every process whose visible is true and name is not \"Finder\")' -e 'repeat with a in l' -e 'tell application a to quit' -e 'end repeat'"
+          "shell": "osascript -e 'tell application \"System Events\" to set l to name of (every process whose visible is true and name is not \"Finder\")' -e 'repeat with a in l' -e 'tell application a to quit' -e 'end repeat'",
+          "show": true
         },
-        { "name": "Shut Down", "shell": "osascript -e 'tell application \"System Events\" to shut down'" },
-        { "name": "Restart", "shell": "osascript -e 'tell application \"System Events\" to restart'" },
-        { "name": "Sleep", "shell": "osascript -e 'tell application \"System Events\" to sleep'" },
-        { "name": "Lock Screen", "shell": "pmset displaysleepnow" },
-        { "name": "Empty Trash", "shell": "osascript -e 'tell application \"Finder\" to empty trash'" }
+        { "name": "Shut Down", "shell": "osascript -e 'tell application \"System Events\" to shut down'", "show": true },
+        { "name": "Restart", "shell": "osascript -e 'tell application \"System Events\" to restart'", "show": true },
+        { "name": "Sleep", "shell": "osascript -e 'tell application \"System Events\" to sleep'", "show": true },
+        { "name": "Lock Screen", "shell": "pmset displaysleepnow", "show": true },
+        { "name": "Empty Trash", "shell": "osascript -e 'tell application \"Finder\" to empty trash'", "show": true }
       ]
     }
     """#

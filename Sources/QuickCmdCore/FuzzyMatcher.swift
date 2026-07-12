@@ -37,7 +37,7 @@ public enum FuzzyMatcher {
 
     public static func filter(_ commands: [Command], query: String) -> [Command] {
         let trimmed = query.trimmingCharacters(in: .whitespaces)
-        if trimmed.isEmpty { return commands }
+        if trimmed.isEmpty { return commands.filter { $0.show == true } }
 
         return commands
             .enumerated()

@@ -9,12 +9,25 @@ final class FuzzyMatcherTests: XCTestCase {
         Command(name: "Sleep", shell: "d"),
     ]
 
-    func testEmptyQueryReturnsAll() {
-        XCTAssertEqual(FuzzyMatcher.filter(commands, query: ""), commands)
+    private let pinnedCommands = [
+        Command(name: "Quit All Apps", shell: "a", show: true),
+        Command(name: "Shut Down", shell: "b", show: true),
+        Command(name: "Restart", shell: "c"),
+        Command(name: "Sleep", shell: "d"),
+    ]
+
+    func testEmptyQueryReturnsOnlyPinned() {
+        let result = FuzzyMatcher.filter(pinnedCommands, query: "")
+        XCTAssertEqual(result.map(\.name), ["Quit All Apps", "Shut Down"])
     }
 
-    func testWhitespaceQueryReturnsAll() {
-        XCTAssertEqual(FuzzyMatcher.filter(commands, query: "   "), commands)
+    func testEmptyQueryReturnsNoneWhenNoPinned() {
+        XCTAssertEqual(FuzzyMatcher.filter(commands, query: ""), [])
+    }
+
+    func testWhitespaceQueryReturnsOnlyPinned() {
+        let result = FuzzyMatcher.filter(pinnedCommands, query: "   ")
+        XCTAssertEqual(result.map(\.name), ["Quit All Apps", "Shut Down"])
     }
 
     func testAbbreviationMatches() {
