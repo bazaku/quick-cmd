@@ -2,7 +2,6 @@ import SwiftUI
 import AppKit
 import QuickCmdCore
 
-// Flat list item spanning both sections for unified keyboard navigation.
 private enum PaletteRow: Identifiable {
     case command(Command)
     case app(AppItem)
@@ -11,13 +10,6 @@ private enum PaletteRow: Identifiable {
         switch self {
         case .command(let c): return "cmd:\(c.id)"
         case .app(let a):     return "app:\(a.url.path)"
-        }
-    }
-
-    var displayName: String {
-        switch self {
-        case .command(let c): return c.name
-        case .app(let a):     return a.name
         }
     }
 }
@@ -68,14 +60,12 @@ struct PaletteView: View {
             Divider()
 
             List {
-                if !filteredCommands.isEmpty {
-                    Section(header: Text("Commands").foregroundColor(.secondary).font(.caption)) {
-                        ForEach(Array(filteredCommands.enumerated()), id: \.element.id) { index, command in
-                            Text(command.name)
-                                .padding(.vertical, 4)
-                                .listRowBackground(rowIndex(for: .command(command)) == selection
-                                    ? Color.accentColor.opacity(0.25) : Color.clear)
-                        }
+                Section(header: Text("Commands").foregroundColor(.secondary).font(.caption)) {
+                    ForEach(Array(filteredCommands.enumerated()), id: \.element.id) { index, command in
+                        Text(command.name)
+                            .padding(.vertical, 4)
+                            .listRowBackground(index == selection
+                                ? Color.accentColor.opacity(0.25) : Color.clear)
                     }
                 }
 
@@ -89,7 +79,7 @@ struct PaletteView: View {
                                 Text(app.name)
                             }
                             .padding(.vertical, 2)
-                            .listRowBackground(rowIndex(for: .app(app)) == selection
+                            .listRowBackground((filteredCommands.count + index) == selection
                                 ? Color.accentColor.opacity(0.25) : Color.clear)
                         }
                     }
@@ -100,10 +90,6 @@ struct PaletteView: View {
         }
         .frame(width: 560)
         .background(.ultraThinMaterial)
-    }
-
-    private func rowIndex(for row: PaletteRow) -> Int {
-        rows.firstIndex(where: { $0.id == row.id }) ?? -1
     }
 
     private func moveSelection(_ delta: Int) {
