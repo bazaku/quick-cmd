@@ -57,6 +57,7 @@ final class StatusBarController: NSObject {
     @objc private func reload() { onReload() }
 
     @objc private func showAbout() {
+        NSApp.activate(ignoringOtherApps: true)
         NSApp.orderFrontStandardAboutPanel(nil)
     }
 
