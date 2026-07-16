@@ -15,8 +15,9 @@ public struct RunResult: Equatable {
 public enum CommandRunner {
     public static func runSync(_ shell: String) -> RunResult {
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/sh")
-        process.arguments = ["-c", shell]
+        let userShell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
+        process.executableURL = URL(fileURLWithPath: userShell)
+        process.arguments = ["-l", "-c", shell]
 
         let outPipe = Pipe()
         let errPipe = Pipe()
